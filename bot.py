@@ -14,9 +14,11 @@ import threading
 from flask import Flask
 
 # ----------------- CONFIG -----------------
-TOKEN = os.getenv("BOT_TOKEN") # Render-এর Env Var থেকে নিবে
+TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 5880876410          
 CHANNELS = ["fojikapp", "fojikapp"]
+
+bot = telebot.TeleBot(TOKEN) # <-- এই লাইনটি অবশ্যই যোগ করুন
 
 # Firebase Initialization
 # নিশ্চিত করুন serviceAccountKey.json ফাইলটি আপনার কোডের পাশেই আছে
@@ -50,13 +52,6 @@ def load_post(code):
     ref = db.reference(f'posts/{code}')
     return ref.get()
 
-def load_post(code):
-    folder = os.path.join("files", code)
-    path = os.path.join(folder, "data.json")
-    if not os.path.exists(path):
-        return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 def build_buttons_markup(buttons):
     if not buttons:
@@ -309,20 +304,12 @@ def delete_cmd(message):
         bot.reply_to(message, "🗑️ ব্যবহার: /delete <code>")
         return
     code = parts[1].strip()
-    folder = os.path.join("files", code)
-    if os.path.exists(folder) and os.path.isdir(folder):
-        for fname in os.listdir(folder):
-            try:
-                os.remove(os.path.join(folder, fname))
-            except Exception:
-                pass
-        try:
-            os.rmdir(folder)
-        except Exception:
-            pass
-        bot.reply_to(message, f"✅ পোস্ট {code} ডিলিট হয়েছে।")
+    ref = db.reference(f'posts/{code}')
+    if ref.get():
+        ref.delete()
+        bot.reply_to(message, f"✅ পোস্ট {code} Firebase থেকে ডিলিট হয়েছে।")
     else:
-        bot.reply_to(message, f"❌ পোস্ট {code} পাওয়া যায়নি।")
+        bot.reply_to(message, f"❌ পোস্ট {code} ডাটাবেসে পাওয়া যায়নি।")
 
 # ---------------- SMART SEARCH ----------------
 @bot.message_handler(func=lambda m: True)
