@@ -24,7 +24,7 @@ bot = telebot.TeleBot(TOKEN) # <-- এই লাইনটি অবশ্যই 
 # নিশ্চিত করুন serviceAccountKey.json ফাইলটি আপনার কোডের পাশেই আছে
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://fojik-6e95d-default-rtdb.firebaseio.com/'
+    'databaseURL': 'https://fojik-9e328-default-rtdb.firebaseio.com/'
 })
 
 app = Flask(__name__)
