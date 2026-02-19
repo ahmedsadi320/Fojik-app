@@ -8,45 +8,47 @@ import uuid
 import difflib
 import json
 import time
+import firebase_admin
+from firebase_admin import credentials, db
+import threading
+from flask import Flask
 
 # ----------------- CONFIG -----------------
-TOKEN = "8559869299:AAGQJ1kVeRe-3jCntirrPYA7Xiiq2nAEUnQ"   # <-- নিজের TOKEN বসাও
-OWNER_ID = 5880876410            # মালিকের আইডি (integer)
-CHANNELS = ["fojikapp", "fojikapp"]  # চ্যানেল ইউজারনেম (without @)
+TOKEN = os.getenv("BOT_TOKEN") # Render-এর Env Var থেকে নিবে
+OWNER_ID = 5880876410          
+CHANNELS = ["fojikapp", "fojikapp"]
+
+# Firebase Initialization
+# নিশ্চিত করুন serviceAccountKey.json ফাইলটি আপনার কোডের পাশেই আছে
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'আপনার_Firebase_Database_URL_এখানে'
+})
+
+app = Flask(__name__)
+@app.route('/')
+def home(): return "Bot is Alive!"
 # ------------------------------------------
 
-bot = telebot.TeleBot(TOKEN)
-
-# Ensure directories and user file exist
-if not os.path.exists("files"):
-    os.mkdir("files")
-
-USER_FILE = "users.txt"
-
-# ----------------- HELPERS -----------------
 def save_user(user_id):
-    if not os.path.exists(USER_FILE):
-        with open(USER_FILE, "w", encoding="utf-8") as f:
-            f.write("")
-    with open(USER_FILE, "r", encoding="utf-8") as f:
-        users = f.read().splitlines()
-    if str(user_id) not in users:
-        with open(USER_FILE, "a", encoding="utf-8") as f:
-            f.write(str(user_id) + "\n")
+    ref = db.reference('users')
+    ref.child(str(user_id)).set(True)
 
 def save_post(files_list, title, buttons=[]):
     uid = str(uuid.uuid4())[:8]
-    folder = os.path.join("files", uid)
-    os.mkdir(folder)
+    ref = db.reference(f'posts/{uid}')
     data = {
         "title": title,
         "files": files_list,
         "buttons": buttons,
         "created_at": int(time.time())
     }
-    with open(os.path.join(folder, "data.json"), "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    ref.set(data)
     return uid
+
+def load_post(code):
+    ref = db.reference(f'posts/{code}')
+    return ref.get()
 
 def load_post(code):
     folder = os.path.join("files", code)
@@ -273,11 +275,12 @@ def broadcast_cmd(message):
     bot.register_next_step_handler(message, do_broadcast)
 
 def do_broadcast(message):
-    if not os.path.exists(USER_FILE):
+    ref = db.reference('users')
+    users_data = ref.get()
+    if not users_data:
         bot.reply_to(message, "❌ কোনো ইউজার পাওয়া যায়নি!")
         return
-    with open(USER_FILE, "r", encoding="utf-8") as f:
-        users = f.read().splitlines()
+    users = list(users_data.keys())
     sent = 0
     failed = 0
     for uid in users:
@@ -334,22 +337,14 @@ def smart_search_handler(message):
     best = None
     best_ratio = 0.0
 
-    for fname in os.listdir("files"):
-        folder = os.path.join("files", fname)
-        data_file = os.path.join(folder, "data.json")
-        if os.path.exists(data_file):
-            try:
-                with open(data_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except Exception:
-                continue
-
+    all_posts = db.reference('posts').get()
+    if all_posts:
+        for code, data in all_posts.items():
             title = (data.get("title") or "").lower()
             ratio = difflib.SequenceMatcher(None, query, title).ratio()
-
             if ratio > best_ratio:
                 best_ratio = ratio
-                best = (fname, data)
+                best = (code, data)
 
     firstname = message.from_user.first_name or "friend"
 
@@ -371,10 +366,13 @@ def smart_search_handler(message):
         send_join_message(message.chat.id, firstname)
 # ---------------- START POLLING ----------------
 if __name__ == "__main__":
-    print("🤖 Bot is running...")
+    print("🤖 Bot is running with Firebase and Render Support...")
+    # Render-এর জন্য Flask সার্ভার ব্যাকগ্রাউন্ডে চালু করা
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080))), daemon=True).start()
+    
     while True:
         try:
-            bot.infinity_polling(skip_pending=True, timeout=30, long_polling_timeout=30)
+            bot.infinity_polling(skip_pending=True, timeout=60)
         except Exception as e:
             print("Error:", e)
             time.sleep(5)
