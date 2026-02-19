@@ -4,12 +4,18 @@
 import telebot
 from telebot import types
 import os
+import time
+import uuid
+import json
+import difflib
+import threading
 import telebot
+from telebot import types
 import firebase_admin
 from firebase_admin import credentials, db
-import json
+from flask import Flask
 
-# Firebase এর ডাটা সরাসরি এখানে সেট করে দিচ্ছি
+# ১. Firebase ডাটা সরাসরি এখানে
 firebase_dict = {
   "type": "service_account",
   "project_id": "fojik-9e328",
@@ -24,29 +30,31 @@ firebase_dict = {
   "universe_domain": "googleapis.com"
 }
 
-# Firebase Initialize
-cred = credentials.Certificate(firebase_dict)
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://fojik-9e328-default-rtdb.firebaseio.com/'
-})
+# ২. Firebase Initialize (একবারই হবে)
+if not firebase_admin._apps:
+    cred = credentials.Certificate(firebase_dict)
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://fojik-9e328-default-rtdb.firebaseio.com/'
+    })
 
 # ----------------- CONFIG -----------------
 TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 5880876410          
 CHANNELS = ["fojikapp", "fojikapp"]
 
-bot = telebot.TeleBot(TOKEN) # <-- এই লাইনটি অবশ্যই যোগ করুন
-
-# Firebase Initialization
-# নিশ্চিত করুন serviceAccountKey.json ফাইলটি আপনার কোডের পাশেই আছে
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://fojik-9e328-default-rtdb.firebaseio.com/'
-})
-
+bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
+
 @app.route('/')
 def home(): return "Bot is Alive!"
+
+# --- বাকি সব ফাংশন এবং হ্যান্ডলার নিচে থাকবে ---
+# (আপনার আগের কোডের ফাংশনগুলো এখানে কপি করে দিন)
+
+if __name__ == "__main__":
+    print("🤖 Bot is running...")
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080))), daemon=True).start()
+    bot.infinity_polling(skip_pending=True)
 # ------------------------------------------
 
 def save_user(user_id):
