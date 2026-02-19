@@ -14,7 +14,7 @@ import threading
 from flask import Flask
 
 # ----------------- CONFIG -----------------
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("8559869299:AAGQJ1kVeRe-3jCntirrPYA7Xiiq2nAEUnQ")
 OWNER_ID = 5880876410          
 CHANNELS = ["fojikapp", "fojikapp"]
 
