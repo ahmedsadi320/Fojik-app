@@ -35,7 +35,7 @@ if not firebase_admin._apps:
     })
 
 # ----------------- CONFIG -----------------
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "8559869299:AAEBtkcJ0H_4WwGkywzHwsJeTy_ciIYyedY"
 OWNER_ID = 5880876410          
 CHANNELS = ["fojikapp", "fojikapp"]
 
