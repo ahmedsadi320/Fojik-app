@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import telebot
-from telebot import types
 import os
 import time
 import uuid
@@ -48,13 +45,6 @@ app = Flask(__name__)
 @app.route('/')
 def home(): return "Bot is Alive!"
 
-# --- বাকি সব ফাংশন এবং হ্যান্ডলার নিচে থাকবে ---
-# (আপনার আগের কোডের ফাংশনগুলো এখানে কপি করে দিন)
-
-if __name__ == "__main__":
-    print("🤖 Bot is running...")
-    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080))), daemon=True).start()
-    bot.infinity_polling(skip_pending=True)
 # ------------------------------------------
 
 def save_user(user_id):
@@ -378,13 +368,14 @@ def smart_search_handler(message):
         send_join_message(message.chat.id, firstname)
 # ---------------- START POLLING ----------------
 if __name__ == "__main__":
-    print("🤖 Bot is running with Firebase and Render Support...")
-    # Render-এর জন্য Flask সার্ভার ব্যাকগ্রাউন্ডে চালু করা
+    print("🤖 Bot is starting successfully...")
+    # Flask সার্ভার রান করা
     threading.Thread(target=lambda: app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080))), daemon=True).start()
     
+    # পোলিং শুরু (এটিই বটকে সচল রাখে)
     while True:
         try:
             bot.infinity_polling(skip_pending=True, timeout=60)
         except Exception as e:
-            print("Error:", e)
+            print(f"Error occurred: {e}")
             time.sleep(5)
