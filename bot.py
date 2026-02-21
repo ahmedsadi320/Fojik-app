@@ -35,8 +35,8 @@ if not firebase_admin._apps:
     })
 
 # ----------------- CONFIG -----------------
-TOKEN = "8559869299:AAEBtkcJ0H_4WwGkywzHwsJeTy_ciIYyedY"
-OWNER_ID = 5880876410          
+TOKEN = "8492257930:AAFn08xiPwYL1oURXXMHx23ISac01QkBd4g"
+OWNER_ID = 7482645491          
 CHANNELS = ["fojikapp", "fojikapp"]
 
 bot = telebot.TeleBot(TOKEN)
